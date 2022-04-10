@@ -1,11 +1,11 @@
-from typing import List, Type
+from typing import List, Optional, Type
 import sqlalchemy
 
-from server.db.objects.base import DBString
+from server.db.objects.base import DBInteger, DBString
 
 from .objects import DBObject
 from ..app import App
-from . import DBModule
+from . import TOBJ, DBModule
 
 class SqlAlchemyModule(DBModule):
     __engine: sqlalchemy.engine.Engine
@@ -19,15 +19,15 @@ class SqlAlchemyModule(DBModule):
     def register_objects(self, types: List[Type[DBObject]]):
         for type in types:
             collection = type.get_collection_name()
-            fields = type.get_fields()
+            fields = type.get_fields(self._config)
 
-            columns: List[sqlalchemy.Column] = [
-                sqlalchemy.Column("id", sqlalchemy.Integer())
-            ]
+            columns: List[sqlalchemy.Column] = []
 
             for field_name, field in fields.items():
                 if isinstance(field, DBString):
-                    column = sqlalchemy.Column(field_name, sqlalchemy.String())
+                    column = sqlalchemy.Column(field_name, sqlalchemy.String(), primary_key=field.primary)
+                elif isinstance(field, DBInteger):
+                    column = sqlalchemy.Column(field_name, sqlalchemy.Integer(), primary_key=field.primary)
                 else:
                     raise Exception(f"Unhandled {field}")
 
@@ -37,20 +37,22 @@ class SqlAlchemyModule(DBModule):
 
         self.__metadata.create_all(self.__engine)
 
-    def get_all(self, type: Type[DBObject]) -> List[DBObject]:
+    def get_all(self, type: Type[TOBJ]) -> List[TOBJ]:
         with self.__engine.connect() as connection:
             table = sqlalchemy.Table(type.get_collection_name(), self.__metadata)
             query = sqlalchemy.select([table])
             proxy = connection.execute(query)
             results = proxy.fetchall()
 
-        datas: List[DBObject] = []
+        datas: List[TOBJ] = []
         for fields in results:
-            data = {}
-
-            for field, field_name in zip(fields[1:], type.get_fields().keys()):
-                data[field_name] = field
-
+            data = {field_name:field for field_name, field in zip(type.get_fields(self._config).keys(), fields)}
             datas.append(type(**data))
 
         return datas
+
+    def get_id(self, type: Type[TOBJ], id: str) -> Optional[TOBJ]:
+        return None
+
+    def insert(self, object: DBObject) -> bool:
+        return False
