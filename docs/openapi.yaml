@@ -1,0 +1,181 @@
+openapi: 3.0.0
+info:
+  title: Server API
+  version: 0.0.1
+servers:
+  - url: "http://localhost:5000/"
+    description: "Development"
+components:
+  securitySchemes:
+    serverAuth:
+      type: http
+      scheme: bearer
+  responses:
+    ResponseError:
+      description: Error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+    ServerBase:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+        address:
+          type: string
+        port:
+          type: integer
+    ServerAuth:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+    ServerInput:
+      allOf:
+        - $ref: "#/components/schemas/ServerBase"
+        - type: object
+          required:
+            - address
+            - port
+            - password
+          properties:
+            password:
+              type: string
+    ServerOutput:
+      allOf:
+        - $ref: "#/components/schemas/ServerBase"
+        - type: object
+          required:
+            - id
+            - name
+            - count
+          properties:
+            id:
+              type: string
+    ServerOutputToken:
+      allOf:
+        - $ref: "#/components/schemas/ServerOutput"
+        - type: object
+          required:
+            - token
+          properties:
+            token:
+              type: string
+paths:
+  /ping:
+    get:
+      description: Checks if server is active.
+      responses:
+        "200":
+          description: A pong response.
+          content:
+            application/json:
+              schema:
+                type: boolean
+        default:
+          $ref: "#/components/responses/ResponseError"
+  /servers:
+    get:
+      description: Returns all active Servers.
+      responses:
+        "200":
+          description: A list of Servers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServerOutput"
+        default:
+          $ref: "#/components/responses/ResponseError"
+    post:
+      description: Creates a new Server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+               $ref: "#/components/schemas/ServerInput"
+      responses:
+        "200":
+          description: A new Server + Auth.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerOutputToken"
+        default:
+          $ref: "#/components/responses/ResponseError"
+  /servers/{id}:
+    post:
+      description: Returns extended server details.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServerAuth"
+      responses:
+        "200":
+          description: Server details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerOutput"
+        default:
+          $ref: "#/components/responses/ResponseError"
+    put:
+      description: Updates server details.
+      security:
+        - serverAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Server details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerOutput"
+        default:
+          $ref: "#/components/responses/ResponseError"
+    delete:
+      description: Deletes server.
+      security:
+        - serverAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Server details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerOutput"
+        default:
+          $ref: "#/components/responses/ResponseError"
