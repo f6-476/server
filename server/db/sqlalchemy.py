@@ -75,7 +75,6 @@ class SqlAlchemyModule(DBModule):
             table = sqlalchemy.Table(object.get_collection_name(), self.__metadata)
             data = object.to_dict(self._config, DBPermission.DB)
             del data["id"]
-            print(object, object.id)
             query = sqlalchemy.update(table).where(sqlalchemy.Column("id") == object.id).values(**data)
             connection.execute(query)
 
