@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 from ..app import App
 from ..module import Module
@@ -32,7 +32,7 @@ class DBModule(Module, ABC):
         return False
 
     @abstractmethod
-    def update(self, object: DBObject) -> bool:
+    def update(self, type: Type[DBObject], id: str, new: Dict[str, Any]) -> bool:
         return False
 
     @abstractmethod

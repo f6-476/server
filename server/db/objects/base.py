@@ -82,6 +82,30 @@ class DBObject(ABC):
         return field_dict
 
     @classmethod
+    def sanitize_dict_unsafe(cls, config: ConfigModule, dict: Dict[str, Any]) -> Dict[str, Any]:
+        fields = cls.get_fields(config)
+
+        field_dict = {}
+        for field_name, field in fields.items():
+            if not field_name in dict:
+                continue
+
+            entry = dict[field_name]
+
+            if not field.builder is None:
+                entry = field.builder(entry)
+            elif isinstance(field, DBString):
+                entry = str(entry)
+            elif isinstance(field, DBInteger):
+                entry = int(entry)
+            else:
+                raise Exception("TODO")
+
+            field_dict[field_name] = entry
+
+        return field_dict
+
+    @classmethod
     def sanitize_dict(cls, config: ConfigModule, dict: Dict[str, Any]) -> Dict[str, Any]:
         fields = cls.get_fields(config)
 

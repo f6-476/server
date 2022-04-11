@@ -74,12 +74,8 @@ def build_servers(config: ConfigModule, db: DBModule) -> Blueprint:
 
         body = request.json
         if valid_token(object):
-            dict = object.to_dict(config=config, permission=DBPermission.DB)
-            data = {**dict, **body}
-            new_object = ServerObject.from_dict(config, data)
-
-            if db.update(new_object):
-                return new_object.to_dict(config, DBPermission.Admin)
+            if db.update(ServerObject, id, body):
+                return object.to_dict(config, DBPermission.Admin)
 
         raise Exception("Update failed.")
 

@@ -70,12 +70,14 @@ class SqlAlchemyModule(DBModule):
 
         return True
 
-    def update(self, object: DBObject) -> bool:
-        with self.__engine.connect() as connection:
-            table = sqlalchemy.Table(object.get_collection_name(), self.__metadata)
-            data = object.to_dict(self._config, DBPermission.DB)
+    def update(self, type: Type[DBObject], id: str, new: Dict[str, Any]) -> bool:
+        data = type.sanitize_dict_unsafe(self._config, new)
+        if "id" in data:
             del data["id"]
-            query = sqlalchemy.update(table).where(sqlalchemy.Column("id") == object.id).values(**data)
+
+        with self.__engine.connect() as connection:
+            table = sqlalchemy.Table(type.get_collection_name(), self.__metadata)
+            query = sqlalchemy.update(table).where(sqlalchemy.Column("id") == id).values(**data)
             connection.execute(query)
 
         return True
