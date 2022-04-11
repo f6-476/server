@@ -3,7 +3,7 @@ info:
   title: Server API
   version: 0.0.1
 servers:
-  - url: "http://localhost:5000/"
+  - url: "http://localhost:13337/"
     description: "Development"
 components:
   securitySchemes:
@@ -25,14 +25,12 @@ components:
           type: string
     ServerBase:
       type: object
-      required:
-        - name
       properties:
         name:
           type: string
         count:
           type: integer
-        address:
+        host:
           type: string
         port:
           type: integer
@@ -48,7 +46,8 @@ components:
         - $ref: "#/components/schemas/ServerBase"
         - type: object
           required:
-            - address
+            - name
+            - host
             - port
             - password
           properties:
@@ -87,7 +86,7 @@ paths:
                 type: boolean
         default:
           $ref: "#/components/responses/ResponseError"
-  /servers:
+  /servers/:
     get:
       description: Returns all active Servers.
       responses:
@@ -119,6 +118,23 @@ paths:
         default:
           $ref: "#/components/responses/ResponseError"
   /servers/{id}:
+    get:
+      description: Returns basic server details.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Server details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerOutput"
+        default:
+          $ref: "#/components/responses/ResponseError"
     post:
       description: Returns extended server details.
       parameters:
@@ -151,6 +167,12 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+               $ref: "#/components/schemas/ServerBase"
       responses:
         "200":
           description: Server details.
