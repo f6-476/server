@@ -6,7 +6,7 @@ from ..module import Module
 from ..config import ConfigModule
 from .objects import DBObject, ServerObject
 
-TOBJ = TypeVar("TOBJ")
+TOBJ = TypeVar("TOBJ", bound=DBObject)
 DB_OBJECTS: List[Type[DBObject]] = [ServerObject]
 class DBModule(Module, ABC):
     _config: ConfigModule
@@ -30,3 +30,11 @@ class DBModule(Module, ABC):
     @abstractmethod
     def insert(self, object: DBObject) -> bool:
         return False
+
+    @abstractmethod
+    def update(self, object: DBObject) -> bool:
+        return False
+
+    @abstractmethod
+    def delete(self, type: Type[TOBJ], id: str) -> bool:
+        return None

@@ -1,7 +1,7 @@
-from typing import List, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 import sqlalchemy
 
-from server.db.objects.base import DBInteger, DBString
+from server.db.objects.base import DBInteger, DBPermission, DBString
 
 from .objects import DBObject
 from ..app import App
@@ -37,6 +37,22 @@ class SqlAlchemyModule(DBModule):
 
         self.__metadata.create_all(self.__engine)
 
+    def __fields_to_type(self, type: Type[TOBJ], fields: List[Any]) -> TOBJ:
+        data = {field_name:field for field_name, field in zip(type.get_fields(self._config).keys(), fields)}
+        return type(**data)
+
+    def get_id(self, type: Type[TOBJ], id: str) -> Optional[TOBJ]:
+        with self.__engine.connect() as connection:
+            table = sqlalchemy.Table(type.get_collection_name(), self.__metadata)
+            query = sqlalchemy.select([table]).where(sqlalchemy.Column("id") == id)
+            proxy = connection.execute(query)
+            result = proxy.fetchone()
+
+        if result is None:
+            return None
+        else:
+            return self.__fields_to_type(type, result)
+
     def get_all(self, type: Type[TOBJ]) -> List[TOBJ]:
         with self.__engine.connect() as connection:
             table = sqlalchemy.Table(type.get_collection_name(), self.__metadata)
@@ -44,15 +60,31 @@ class SqlAlchemyModule(DBModule):
             proxy = connection.execute(query)
             results = proxy.fetchall()
 
-        datas: List[TOBJ] = []
-        for fields in results:
-            data = {field_name:field for field_name, field in zip(type.get_fields(self._config).keys(), fields)}
-            datas.append(type(**data))
-
-        return datas
-
-    def get_id(self, type: Type[TOBJ], id: str) -> Optional[TOBJ]:
-        return None
+        return [self.__fields_to_type(type, fields) for fields in results]
 
     def insert(self, object: DBObject) -> bool:
-        return False
+        with self.__engine.connect() as connection:
+            table = sqlalchemy.Table(object.get_collection_name(), self.__metadata)
+            query = sqlalchemy.insert(table).values(**object.to_dict(self._config, DBPermission.DB))
+            connection.execute(query)
+
+        return True
+
+    def update(self, object: DBObject) -> bool:
+        with self.__engine.connect() as connection:
+            table = sqlalchemy.Table(object.get_collection_name(), self.__metadata)
+            data = object.to_dict(self._config, DBPermission.DB)
+            del data["id"]
+            print(object, object.id)
+            query = sqlalchemy.update(table).where(sqlalchemy.Column("id") == object.id).values(**data)
+            connection.execute(query)
+
+        return True
+
+    def delete(self, type: Type[TOBJ], id: str) -> bool:
+        with self.__engine.connect() as connection:
+            table = sqlalchemy.Table(type.get_collection_name(), self.__metadata)
+            query = sqlalchemy.delete(table).where(sqlalchemy.Column("id") == id)
+            connection.execute(query)
+
+        return True

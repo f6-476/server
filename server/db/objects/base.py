@@ -8,20 +8,24 @@ from ...config import ConfigModule
 
 class DBFieldVisibility(Enum):
     Visible=auto()
-    Auth=auto()
+    User=auto()
+    Admin=auto()
     Invisible=auto()
 
 class DBPermission(Enum):
     Guest=auto()
-    Auth=auto()
+    User=auto()
     Admin=auto()
+    DB=auto()
 
     def can_view_visibility(self, field: DBFieldVisibility) -> bool:
         if self == DBPermission.Guest:
             return field in [DBFieldVisibility.Visible]
-        elif self == DBPermission.Auth:
-            return field in [DBFieldVisibility.Visible, DBFieldVisibility.Auth]
+        elif self == DBPermission.User:
+            return field in [DBFieldVisibility.Visible, DBFieldVisibility.User]
         elif self == DBPermission.Admin:
+            return not field == DBFieldVisibility.Invisible
+        elif self == DBPermission.DB:
             return True
         else:
             return False
@@ -30,7 +34,8 @@ class DBPermission(Enum):
 class DBField(ABC):
     primary: bool=field(default=False)
     visibility: DBFieldVisibility=field(default=DBFieldVisibility.Visible)
-    transform: Optional[Callable[[Any], Any]]=field(default=None)
+    builder: Optional[Callable[[Any], Any]]=field(default=None)
+    default_factory: Optional[Callable[[], Any]]=field(default=None)
 
 @dataclass(frozen=True)
 class DBString(DBField):
@@ -59,7 +64,7 @@ class DBObject(ABC):
     @abstractclassmethod
     def get_fields(cls, config: ConfigModule) -> Dict[str, DBField]:
         return {
-            "id": DBString(primary=True, transform=lambda _: cls.random_id())
+            "id": DBString(default_factory=lambda: cls.random_id(), primary=True)
         }
 
     @abstractclassmethod
@@ -84,11 +89,13 @@ class DBObject(ABC):
         for field_name, field in fields.items():
             if field_name in dict:
                 entry = dict[field_name]
+            elif not field.default_factory is None:
+                entry = field.default_factory()
             else:
                 entry = None
 
-            if not field.transform is None:
-                entry = field.transform(entry)
+            if not field.builder is None:
+                entry = field.builder(entry)
             elif isinstance(field, DBString):
                 entry = str(entry)
             elif isinstance(field, DBInteger):

@@ -19,4 +19,4 @@ class ApiModule(Module):
         build_routes(self.__flask, self.__config, self.__db)
 
     def run(self):
-        self.__flask.run(debug=self.__config.debug)
+        self.__flask.run(host=self.__config.host, port=self.__config.port, debug=self.__config.debug)
