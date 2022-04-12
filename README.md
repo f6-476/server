@@ -13,7 +13,7 @@ Install the dependencies with:
 ```
 python3 -m venv ./.venv
 source ./.venv/bin/activate # Use the activate binary for your OS/shell
-pip3 install -r requirements
+pip3 install -r requirements.txt
 ```
 
 ### Running
