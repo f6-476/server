@@ -6,6 +6,7 @@ from server import App
 from server.api import ApiModule
 from server.config import ConfigModule
 from server.db.sqlalchemy import SqlAlchemyModule
+from server.job import JobModule
 
 def main():
     app = App()
@@ -24,6 +25,7 @@ def main():
 
     app.register_module(ConfigModule, debug=config["debug"], salt=config["salt"].encode(), port=config["port"])
     app.register_module(SqlAlchemyModule)
+    app.register_module(JobModule)
     app.register_module(ApiModule)
 
     app.run()

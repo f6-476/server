@@ -33,6 +33,7 @@ class DBPermission(Enum):
 @dataclass(frozen=True)
 class DBField(ABC):
     primary: bool=field(default=False)
+    unique: bool=field(default=False)
     visibility: DBFieldVisibility=field(default=DBFieldVisibility.Visible)
     builder: Optional[Callable[[Any], Any]]=field(default=None)
     default_factory: Optional[Callable[[], Any]]=field(default=None)
@@ -111,7 +112,7 @@ class DBObject(ABC):
 
         field_dict = {}
         for field_name, field in fields.items():
-            if field_name in dict:
+            if field_name in dict and not dict[field_name] is None:
                 entry = dict[field_name]
             elif not field.default_factory is None:
                 entry = field.default_factory()
@@ -121,9 +122,15 @@ class DBObject(ABC):
             if not field.builder is None:
                 entry = field.builder(entry)
             elif isinstance(field, DBString):
-                entry = str(entry)
+                try:
+                    entry = str(entry)
+                except:
+                    raise Exception(f"{field_name} is \"{entry}\". Expected a str.")
             elif isinstance(field, DBInteger):
-                entry = int(entry)
+                try:
+                    entry = int(entry)
+                except:
+                    raise Exception(f"{field_name} is \"{entry}\". Expected an int.")
             else:
                 raise Exception("TODO")
 

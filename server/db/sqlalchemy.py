@@ -25,9 +25,9 @@ class SqlAlchemyModule(DBModule):
 
             for field_name, field in fields.items():
                 if isinstance(field, DBString):
-                    column = sqlalchemy.Column(field_name, sqlalchemy.String(), primary_key=field.primary)
+                    column = sqlalchemy.Column(field_name, sqlalchemy.String(), primary_key=field.primary, unique=field.unique)
                 elif isinstance(field, DBInteger):
-                    column = sqlalchemy.Column(field_name, sqlalchemy.Integer(), primary_key=field.primary)
+                    column = sqlalchemy.Column(field_name, sqlalchemy.Integer(), primary_key=field.primary, unique=field.unique)
                 else:
                     raise Exception(f"Unhandled {field}")
 

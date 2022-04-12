@@ -7,7 +7,7 @@ from .servers import build_servers
 
 def build_routes(app: Flask, config: ConfigModule, db: DBModule):
     @app.errorhandler(Exception)
-    def error_handler(error):
+    def error_handler(error: Exception):
         return {"message": str(error)}, 500
 
     app.register_blueprint(build_core(config, db))

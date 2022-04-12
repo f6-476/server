@@ -30,8 +30,6 @@ components:
           type: string
         count:
           type: integer
-        host:
-          type: string
         port:
           type: integer
     ServerAuth:
@@ -47,7 +45,6 @@ components:
         - type: object
           required:
             - name
-            - host
             - port
             - password
           properties:
@@ -60,10 +57,16 @@ components:
           required:
             - id
             - name
+            - host
+            - port
             - count
           properties:
             id:
               type: string
+            host:
+              type: string
+            time:
+              type: integer
     ServerOutputToken:
       allOf:
         - $ref: "#/components/schemas/ServerOutput"

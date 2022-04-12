@@ -21,15 +21,18 @@ def build_servers(config: ConfigModule, db: DBModule) -> Blueprint:
             raise Exception("Invalid body.")
 
         dict = request.json
-        if "id" in dict:
-            del dict["id"]
-        if "token" in dict:
-            del dict["token"]
+
+        dict["id"] = None
+        dict["token"] = None
+        dict["host"] = request.remote_addr
+        dict["time"] = None
 
         object = ServerObject.from_dict(config=config, dict=dict)
-
         if not db.insert(object):
             raise Exception("Create failed.")
+
+        if not db.get_id(ServerObject, object.id):
+            raise Exception("Created failed.")
 
         return object.to_dict(config=config, permission=DBPermission.Admin)
 
